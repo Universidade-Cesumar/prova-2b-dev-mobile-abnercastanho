@@ -33,14 +33,12 @@ export default function App() {
 
   // Requisicao POST para cadastrar um novo insumo
   const cadastrarMaterial = async () => {
-    // Validacao simples para nao mandar campo vazio
     if (!nome.trim() || !quantidade.trim()) {
       Alert.alert("Aviso", "Preencha todos os campos antes de cadastrar.");
       return;
     }
 
     try {
-      // Objeto formatado com as propriedades que a API vai receber
       const novoInsumo = {
         name: nome,
         quantidade: Number(quantidade)
@@ -56,9 +54,9 @@ export default function App() {
 
       if (resposta.ok) {
         Alert.alert("Sucesso", "Material cadastrado!");
-        setNome(''); // Limpa o input
-        setQuantidade(''); // Limpa o input
-        buscarEstoque(); // Atualiza a lista na tela logo apos cadastrar
+        setNome('');
+        setQuantidade('');
+        buscarEstoque();
       }
     } catch (error) {
       console.error(error);
@@ -66,7 +64,42 @@ export default function App() {
     }
   };
 
-  // 🆕 FUNÇÃO NOVA: Preenche o formulario com o item selecionado da lista
+  // 🆕 FUNÇÃO NOVA: Requisicao PUT para atualizar um material existente
+  const salvarEdicao = async () => {
+    if (!nome.trim() || !quantidade.trim()) {
+      Alert.alert("Aviso", "Preencha todos os campos antes de salvar.");
+      return;
+    }
+
+    try {
+      const materialAtualizado = {
+        name: nome,
+        quantidade: Number(quantidade)
+      };
+
+      // Monta a URL apontando diretamente para o ID do item sendo editado (/materiais/id)
+      const resposta = await fetch(`${urlAPI}/${idEditando}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(materialAtualizado)
+      });
+
+      if (resposta.ok) {
+        Alert.alert("Sucesso", "Material atualizado com sucesso!");
+        setNome('');
+        setQuantidade('');
+        setIdEditando(null); // Reseta o estado para voltar ao modo de cadastro
+        buscarEstoque(); // Atualiza a lista na tela
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Erro", "Falha ao atualizar o material.");
+    }
+  };
+
+  // Preenche o formulario com o item selecionado da lista
   const selecionarParaEdicao = (item) => {
     setIdEditando(item.id);
     setNome(item.name);
@@ -103,12 +136,16 @@ export default function App() {
           onChangeText={setQuantidade}
         />
 
+        {/* 🆕 ALTERADO: Decide qual funcao chamar no onPress baseado no estado idEditando */}
         <TouchableOpacity 
           testID="btn-cadastrar" 
           style={styles.button}
-          onPress={cadastrarMaterial}
+          onPress={idEditando ? salvarEdicao : cadastrarMaterial}
         >
-          <Text style={styles.buttonText}>Cadastrar Insumo</Text>
+          {/* 🆕 ALTERADO: Muda o texto do botao dinamicamente */}
+          <Text style={styles.buttonText}>
+            {idEditando ? "Salvar Alterações" : "Cadastrar Insumo"}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -126,7 +163,6 @@ export default function App() {
           data={produtos}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            /* 🆕 ADICIONADO: TouchableOpacity envolvendo a linha para permitir o clique de selecao */
             <TouchableOpacity style={styles.itemRow} onPress={() => selecionarParaEdicao(item)}>
               <Text style={styles.itemNome}>{item.name}</Text>
               <Text style={styles.itemQtd}>Qtd: {item.quantidade || 0}</Text>
