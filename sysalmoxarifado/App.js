@@ -158,12 +158,12 @@ export default function App() {
           onPress={idEditando ? salvarEdicao : cadastrarMaterial}
         >
           <Text style={styles.buttonText}>
-            {idEditando ? "Salvar Alterações" : "Cadastrar Insumo"}
+            {idEditando ? "💾 Salvar Alterações" : "➕ Cadastrar Insumo"}
           </Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.subtitle}>Estoque Atual (Clique para Editar)</Text>
+      <Text style={styles.subtitle}>Estoque Atual</Text>
 
       {carregando ? (
         <View style={styles.center}>
@@ -177,17 +177,26 @@ export default function App() {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.itemRow}>
-              <TouchableOpacity style={{ flex: 1 }} onPress={() => selecionarParaEdicao(item)}>
+              {/* Informacoes do Material */}
+              <View style={{ flex: 1 }}>
                 <Text style={styles.itemNome}>{item.name}</Text>
-                {/* Badge estilizada para a quantidade */}
                 <View style={styles.badgeQtd}>
                   <Text style={styles.itemQtdText}>Qtd: {item.quantidade || 0}</Text>
                 </View>
-              </TouchableOpacity>
+              </View>
               
-              <TouchableOpacity style={styles.deleteButton} onPress={() => excluirMaterial(item.id)}>
-                <Text style={styles.deleteButtonText}>Excluir</Text>
-              </TouchableOpacity>
+              {/* Container de Botoes de Acao */}
+              <View style={styles.actionsContainer}>
+                {/* 🆕 BOTÃO DE EDITAR (Lápis) */}
+                <TouchableOpacity style={styles.editCardButton} onPress={() => selecionarParaEdicao(item)}>
+                  <Text style={styles.actionButtonText}>📝 Editar</Text>
+                </TouchableOpacity>
+
+                {/* BOTÃO DE EXCLUIR (Lixeira) */}
+                <TouchableOpacity style={styles.deleteButton} onPress={() => excluirMaterial(item.id)}>
+                  <Text style={styles.actionButtonText}>🗑️ Excluir</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
           style={styles.lista}
@@ -198,37 +207,41 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingTop: 50, paddingHorizontal: 20 },
-  title: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: '#005b96' },
-  subtitle: { fontSize: 18, fontWeight: 'bold', marginVertical: 15, color: '#333', borderBottomWidth: 1, borderBottomColor: '#ccc', paddingBottom: 5 },
-  formContext: { backgroundColor: '#f8f9fa', padding: 20, borderRadius: 10, marginBottom: 15, borderWidth: 1, borderColor: '#e9ecef' },
+  container: { flex: 1, backgroundColor: '#f4f6f9', paddingTop: 50, paddingHorizontal: 20 },
+  title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: '#005b96' },
+  subtitle: { fontSize: 18, fontWeight: 'bold', marginVertical: 15, color: '#333', borderBottomWidth: 2, borderBottomColor: '#005b96', paddingBottom: 5 },
+  formContext: { backgroundColor: '#fff', padding: 20, borderRadius: 10, marginBottom: 15, borderWidth: 1, borderColor: '#dee2e6', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 },
   label: { fontSize: 14, fontWeight: 'bold', color: '#495057', marginBottom: 6 },
-  input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ced4da', borderRadius: 6, padding: 12, marginBottom: 14, fontSize: 15 },
+  input: { backgroundColor: '#f8f9fa', borderWidth: 1, borderColor: '#ced4da', borderRadius: 6, padding: 12, marginBottom: 14, fontSize: 15 },
   button: { backgroundColor: '#005b96', padding: 14, borderRadius: 6, alignItems: 'center', marginTop: 5 },
   buttonEdit: { backgroundColor: '#28a745', padding: 14, borderRadius: 6, alignItems: 'center', marginTop: 5 },
   buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   lista: { flex: 1 },
+  // 🆕 CARDS MAIS VISÍVEIS: Fundo branco puro com borda cinza escura e sombra destacada
   itemRow: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
     padding: 16, 
     backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderWidth: 1.5,
+    borderColor: '#ced4da',
     borderRadius: 8,
     marginBottom: 12, 
     alignItems: 'center',
-    // Sombra leve para destacar bem o container individual
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3
   },
-  itemNome: { fontSize: 16, fontWeight: '600', color: '#212529' },
+  itemNome: { fontSize: 16, fontWeight: 'bold', color: '#212529' },
   badgeQtd: { backgroundColor: '#e3f2fd', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, marginTop: 6, alignSelf: 'flex-start' },
   itemQtdText: { fontSize: 13, fontWeight: 'bold', color: '#005b96' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
-  deleteButton: { backgroundColor: '#dc3545', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 6, marginLeft: 10 },
-  deleteButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 13 }
+  
+  // 🆕 ESTILOS DOS BOTÕES DE AÇÃO INTERNOS
+  actionsContainer: { flexDirection: 'row', alignItems: 'center' },
+  editCardButton: { backgroundColor: '#ffc107', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 6, flexDirection: 'row', alignItems: 'center', marginRight: 8 },
+  deleteButton: { backgroundColor: '#dc3545', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 6, flexDirection: 'row', alignItems: 'center' },
+  actionButtonText: { color: '#212529', fontWeight: 'bold', fontSize: 13 }
 });
