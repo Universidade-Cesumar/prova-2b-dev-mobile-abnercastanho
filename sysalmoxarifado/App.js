@@ -10,10 +10,10 @@ export default function App() {
   const [produtos, setProdutos] = useState([]);
   const [carregando, setCarregando] = useState(true); // Começa true para buscar os dados ao abrir
 
-  // --- NOVA CONFIGURAÇÃO: URL da sua API no MockAPI ---
-  const urlAPI = 'https://6a18c2e823c3626470abff38.mockapi.io/api/prova2bi/produtos';
 
-  // --- NOVA FUNÇÃO ASSÍNCRONA (GET): Consumo dos dados do estoque ---
+  const urlAPI = 'COLE_AQUI_A_SUA_NOVA_URL_DO_MOCKAPI/produtos';
+
+  // --- FUNÇÃO ASSÍNCRONA (GET): Consumo dos dados do estoque ---
   const buscarEstoque = async () => {
     try {
       setCarregando(true);
@@ -28,7 +28,7 @@ export default function App() {
     }
   };
 
-  // --- NOVO HOOK (Ciclo de Vida): Executa a busca imediatamente após a montagem da tela ---
+  // --- HOOK (Ciclo de Vida): Executa a busca imediatamente após a montagem da tela ---
   useEffect(() => {
     buscarEstoque();
   }, []);
@@ -73,7 +73,7 @@ export default function App() {
         </View>
       ) : (
         <FlatList
-          testID="lista-materials"
+          testID="lista-materiais"
           data={produtos}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
