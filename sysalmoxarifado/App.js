@@ -10,7 +10,7 @@ export default function App() {
   const [produtos, setProdutos] = useState([]);
   const [carregando, setCarregando] = useState(true);
 
-  // 🆕 ESTADO NOVO: Guarda o ID do item que o usuario clicar para editar
+  // Estado para armazenar o ID do item selecionado para edicao
   const [idEditando, setIdEditando] = useState(null);
 
   // URL corrigida para bater com o recurso 'materiais' do seu MockAPI
@@ -66,6 +66,13 @@ export default function App() {
     }
   };
 
+  // 🆕 FUNÇÃO NOVA: Preenche o formulario com o item selecionado da lista
+  const selecionarParaEdicao = (item) => {
+    setIdEditando(item.id);
+    setNome(item.name);
+    setQuantidade(item.quantidade ? item.quantidade.toString() : '0');
+  };
+
   // useEffect para rodar a busca assim que o app abrir (Ciclo de vida)
   useEffect(() => {
     buscarEstoque();
@@ -105,7 +112,7 @@ export default function App() {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.subtitle}>Estoque Atual</Text>
+      <Text style={styles.subtitle}>Estoque Atual (Clique para Editar)</Text>
 
       {/* Renderizacao condicional para o Indicator de Loading */}
       {carregando ? (
@@ -119,11 +126,11 @@ export default function App() {
           data={produtos}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <View style={styles.itemRow}>
-              {/* Lendo item.name para bater com os nomes de exemplo da sua API */}
+            /* 🆕 ADICIONADO: TouchableOpacity envolvendo a linha para permitir o clique de selecao */
+            <TouchableOpacity style={styles.itemRow} onPress={() => selecionarParaEdicao(item)}>
               <Text style={styles.itemNome}>{item.name}</Text>
               <Text style={styles.itemQtd}>Qtd: {item.quantidade || 0}</Text>
-            </View>
+            </TouchableOpacity>
           )}
           style={styles.lista}
         />
