@@ -1,14 +1,37 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Alert } from 'react-native';
 
 export default function App() {
   // Estados para controlar o texto dos inputs do formulário
   const [nome, setNome] = useState('');
   const [quantidade, setQuantidade] = useState('');
 
-  // --- NOVOS ESTADOS: Lista de produtos e indicador de carregamento ---
+  // Estados: Lista de produtos e indicador de carregamento
   const [produtos, setProdutos] = useState([]);
-  const [carregando, setCarregando] = useState(false);
+  const [carregando, setCarregando] = useState(true); // Começa true para buscar os dados ao abrir
+
+  // --- NOVA CONFIGURAÇÃO: URL da sua API no MockAPI ---
+  const urlAPI = 'https://6a18c2e823c3626470abff38.mockapi.io/api/prova2bi/produtos';
+
+  // --- NOVA FUNÇÃO ASSÍNCRONA (GET): Consumo dos dados do estoque ---
+  const buscarEstoque = async () => {
+    try {
+      setCarregando(true);
+      const resposta = await fetch(urlAPI);
+      const dados = await resposta.json();
+      setProdutos(dados); // Armazena o array recebido no estado local
+    } catch (error) {
+      console.error("Erro ao buscar dados do servidor:", error);
+      Alert.alert("Erro de Conexão", "Não foi possível sincronizar o estoque com o servidor.");
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  // --- NOVO HOOK (Ciclo de Vida): Executa a busca imediatamente após a montagem da tela ---
+  useEffect(() => {
+    buscarEstoque();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -40,17 +63,17 @@ export default function App() {
         </TouchableOpacity>
       </View>
 
-      {/* --- NOVA SEÇÃO: Título e Lista de Rolagem --- */}
+      {/* Seção: Título e Lista de Rolagem */}
       <Text style={styles.subtitle}>Estoque Atual</Text>
 
       {carregando ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#005b96" />
-          <Text>Buscando dados no servidor...</Text>
+          <Text style={{ marginTop: 10 }}>Buscando dados no servidor...</Text>
         </View>
       ) : (
         <FlatList
-          testID="lista-materiais"
+          testID="lista-materials"
           data={produtos}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
