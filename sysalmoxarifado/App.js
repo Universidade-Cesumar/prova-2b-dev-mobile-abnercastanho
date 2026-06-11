@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 
 export default function App() {
   // Estados para controlar o texto dos inputs do formulário
   const [nome, setNome] = useState('');
   const [quantidade, setQuantidade] = useState('');
 
+  // --- NOVOS ESTADOS: Lista de produtos e indicador de carregamento ---
+  const [produtos, setProdutos] = useState([]);
+  const [carregando, setCarregando] = useState(false);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Almoxarifado - Enfermagem</Text>
       
-      {/* Formulário de Cadastro de Insumos - Sprint 1 */}
+      {/* Formulário de Cadastro de Insumos */}
       <View style={styles.formContext}>
         <Text style={styles.label}>Nome do Material:</Text>
         <TextInput
@@ -35,6 +39,29 @@ export default function App() {
           <Text style={styles.buttonText}>Cadastrar Insumo</Text>
         </TouchableOpacity>
       </View>
+
+      {/* --- NOVA SEÇÃO: Título e Lista de Rolagem --- */}
+      <Text style={styles.subtitle}>Estoque Atual</Text>
+
+      {carregando ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#005b96" />
+          <Text>Buscando dados no servidor...</Text>
+        </View>
+      ) : (
+        <FlatList
+          testID="lista-materiais"
+          data={produtos}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.itemRow}>
+              <Text style={styles.itemNome}>{item.nome}</Text>
+              <Text style={styles.itemQtd}>Qtd: {item.quantidade}</Text>
+            </View>
+          )}
+          style={styles.lista}
+        />
+      )}
     </View>
   );
 }
@@ -42,9 +69,15 @@ export default function App() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', paddingTop: 50, paddingHorizontal: 20 },
   title: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: '#005b96' },
+  subtitle: { fontSize: 18, fontWeight: 'bold', marginVertical: 15, color: '#333', borderBottomWidth: 1, borderBottomColor: '#ccc', paddingBottom: 5 },
   formContext: { backgroundColor: '#f1f1f1', padding: 15, borderRadius: 8, marginBottom: 10 },
   label: { fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 5 },
   input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ccc', borderRadius: 5, padding: 10, marginBottom: 12, fontSize: 15 },
   button: { backgroundColor: '#013a63', padding: 12, borderRadius: 5, alignItems: 'center', marginTop: 5 },
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 }
+  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  lista: { flex: 1 },
+  itemRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 15, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: '#eee', alignItems: 'center' },
+  itemNome: { fontSize: 16, fontWeight: '600', color: '#444' },
+  itemQtd: { fontSize: 14, fontWeight: 'bold', color: '#005b96' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 20 }
 });
