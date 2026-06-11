@@ -98,7 +98,7 @@ export default function App() {
     }
   };
 
-  // 🆕 FUNÇÃO NOVA: Requisicao HTTP DELETE para remover o material da API
+  // Requisicao HTTP DELETE para remover o material da API
   const excluirMaterial = async (id) => {
     try {
       const resposta = await fetch(`${urlAPI}/${id}`, {
@@ -107,7 +107,7 @@ export default function App() {
 
       if (resposta.ok) {
         Alert.alert("Sucesso", "Material removido do estoque!");
-        buscarEstoque(); // Recarrega a lista atualizada
+        buscarEstoque();
       }
     } catch (error) {
       console.error(error);
@@ -183,7 +183,7 @@ export default function App() {
                 <Text style={styles.itemQtd}>Qtd: {item.quantidade || 0}</Text>
               </TouchableOpacity>
               
-              {/* 🆕 BOTÃO NOVO: Dispara a exclusao do item */}
+              {/* Botao de exclusao do item */}
               <TouchableOpacity style={styles.deleteButton} onPress={() => excluirMaterial(item.id)}>
                 <Text style={styles.deleteButtonText}>Excluir</Text>
               </TouchableOpacity>
@@ -206,11 +206,27 @@ const styles = StyleSheet.create({
   button: { backgroundColor: '#013a63', padding: 12, borderRadius: 5, alignItems: 'center', marginTop: 5 },
   buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   lista: { flex: 1 },
-  itemRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: '#eee', alignItems: 'center' },
+  // 🆕 ESTILOS ATUALIZADOS: Linha modificada para parecer um Card/Container separado
+  itemRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    padding: 15, 
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    borderRadius: 8,
+    marginBottom: 10, 
+    alignItems: 'center',
+    // Pequena sombra para dar efeito de relevo na web/mobile
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1
+  },
   itemNome: { fontSize: 16, fontWeight: '600', color: '#444' },
-  itemQtd: { fontSize: 14, fontWeight: 'bold', color: '#005b96' },
+  itemQtd: { fontSize: 14, fontWeight: 'bold', color: '#005b96', marginTop: 3 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
-  // 🆕 ESTILOS NOVOS: Para o botao vermelho de excluir
-  deleteButton: { backgroundColor: '#d9534f', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 4, marginLeft: 10 },
+  deleteButton: { backgroundColor: '#d9534f', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 5, marginLeft: 10 },
   deleteButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 13 }
 });
