@@ -64,7 +64,7 @@ export default function App() {
     }
   };
 
-  // 🆕 FUNÇÃO NOVA: Requisicao PUT para atualizar um material existente
+  // Requisicao PUT para atualizar um material existente
   const salvarEdicao = async () => {
     if (!nome.trim() || !quantidade.trim()) {
       Alert.alert("Aviso", "Preencha todos os campos antes de salvar.");
@@ -77,7 +77,6 @@ export default function App() {
         quantidade: Number(quantidade)
       };
 
-      // Monta a URL apontando diretamente para o ID do item sendo editado (/materiais/id)
       const resposta = await fetch(`${urlAPI}/${idEditando}`, {
         method: 'PUT',
         headers: {
@@ -90,12 +89,29 @@ export default function App() {
         Alert.alert("Sucesso", "Material atualizado com sucesso!");
         setNome('');
         setQuantidade('');
-        setIdEditando(null); // Reseta o estado para voltar ao modo de cadastro
-        buscarEstoque(); // Atualiza a lista na tela
+        setIdEditando(null);
+        buscarEstoque();
       }
     } catch (error) {
       console.error(error);
       Alert.alert("Erro", "Falha ao atualizar o material.");
+    }
+  };
+
+  // 🆕 FUNÇÃO NOVA: Requisicao HTTP DELETE para remover o material da API
+  const excluirMaterial = async (id) => {
+    try {
+      const resposta = await fetch(`${urlAPI}/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (resposta.ok) {
+        Alert.alert("Sucesso", "Material removido do estoque!");
+        buscarEstoque(); // Recarrega a lista atualizada
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Erro", "Nao foi possivel excluir o material.");
     }
   };
 
@@ -136,13 +152,11 @@ export default function App() {
           onChangeText={setQuantidade}
         />
 
-        {/* 🆕 ALTERADO: Decide qual funcao chamar no onPress baseado no estado idEditando */}
         <TouchableOpacity 
           testID="btn-cadastrar" 
           style={styles.button}
           onPress={idEditando ? salvarEdicao : cadastrarMaterial}
         >
-          {/* 🆕 ALTERADO: Muda o texto do botao dinamicamente */}
           <Text style={styles.buttonText}>
             {idEditando ? "Salvar Alterações" : "Cadastrar Insumo"}
           </Text>
@@ -151,7 +165,6 @@ export default function App() {
 
       <Text style={styles.subtitle}>Estoque Atual (Clique para Editar)</Text>
 
-      {/* Renderizacao condicional para o Indicator de Loading */}
       {carregando ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#005b96" />
@@ -163,10 +176,18 @@ export default function App() {
           data={produtos}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.itemRow} onPress={() => selecionarParaEdicao(item)}>
-              <Text style={styles.itemNome}>{item.name}</Text>
-              <Text style={styles.itemQtd}>Qtd: {item.quantidade || 0}</Text>
-            </TouchableOpacity>
+            <View style={styles.itemRow}>
+              {/* O clique no texto seleciona para edicao */}
+              <TouchableOpacity style={{ flex: 1 }} onPress={() => selecionarParaEdicao(item)}>
+                <Text style={styles.itemNome}>{item.name}</Text>
+                <Text style={styles.itemQtd}>Qtd: {item.quantidade || 0}</Text>
+              </TouchableOpacity>
+              
+              {/* 🆕 BOTÃO NOVO: Dispara a exclusao do item */}
+              <TouchableOpacity style={styles.deleteButton} onPress={() => excluirMaterial(item.id)}>
+                <Text style={styles.deleteButtonText}>Excluir</Text>
+              </TouchableOpacity>
+            </View>
           )}
           style={styles.lista}
         />
@@ -185,8 +206,11 @@ const styles = StyleSheet.create({
   button: { backgroundColor: '#013a63', padding: 12, borderRadius: 5, alignItems: 'center', marginTop: 5 },
   buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   lista: { flex: 1 },
-  itemRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 15, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: '#eee', alignItems: 'center' },
+  itemRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: '#eee', alignItems: 'center' },
   itemNome: { fontSize: 16, fontWeight: '600', color: '#444' },
   itemQtd: { fontSize: 14, fontWeight: 'bold', color: '#005b96' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 20 }
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
+  // 🆕 ESTILOS NOVOS: Para o botao vermelho de excluir
+  deleteButton: { backgroundColor: '#d9534f', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 4, marginLeft: 10 },
+  deleteButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 13 }
 });
