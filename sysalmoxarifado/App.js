@@ -10,8 +10,11 @@ export default function App() {
   const [produtos, setProdutos] = useState([]);
   const [carregando, setCarregando] = useState(true);
 
-  // Endpoint oficial gerado la no MockAPI
-  const urlAPI = 'https://6a2b36d8b687a7d5cbc4f58b.mockapi.io/produtos';
+  // 🆕 ESTADO NOVO: Guarda o ID do item que o usuario clicar para editar
+  const [idEditando, setIdEditando] = useState(null);
+
+  // URL corrigida para bater com o recurso 'materiais' do seu MockAPI
+  const urlAPI = 'https://6a2b36d8b687a7d5cbc4f58b.mockapi.io/materiais';
 
   // Requisicao GET para puxar os produtos cadastrados
   const buscarEstoque = async () => {
@@ -37,10 +40,10 @@ export default function App() {
     }
 
     try {
-      // ⚠️ Ajustado para bater exatamente com as colunas criadas no seu MockAPI
+      // Objeto formatado com as propriedades que a API vai receber
       const novoInsumo = {
-        Material: nome,
-        Qtd: Number(quantidade)
+        name: nome,
+        quantidade: Number(quantidade)
       };
 
       const resposta = await fetch(urlAPI, {
@@ -117,9 +120,9 @@ export default function App() {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.itemRow}>
-              {/* ⚠️ Ajustado para ler as chaves corretas: item.Material e item.Qtd */}
-              <Text style={styles.itemNome}>{item.Material}</Text>
-              <Text style={styles.itemQtd}>Qtd: {item.Qtd}</Text>
+              {/* Lendo item.name para bater com os nomes de exemplo da sua API */}
+              <Text style={styles.itemNome}>{item.name}</Text>
+              <Text style={styles.itemQtd}>Qtd: {item.quantidade || 0}</Text>
             </View>
           )}
           style={styles.lista}
