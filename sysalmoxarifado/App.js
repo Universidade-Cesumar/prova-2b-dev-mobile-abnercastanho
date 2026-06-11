@@ -11,7 +11,7 @@ export default function App() {
   const [carregando, setCarregando] = useState(true);
 
   // Endpoint oficial gerado la no MockAPI
-  const urlAPI = 'https://6a2b36d8b687a7d5cbc4f58b.mockapi.io/:endpoint';
+  const urlAPI = 'https://6a2b36d8b687a7d5cbc4f58b.mockapi.io/produtos';
 
   // Requisicao GET para puxar os produtos cadastrados
   const buscarEstoque = async () => {
@@ -37,9 +37,10 @@ export default function App() {
     }
 
     try {
+      // ⚠️ Ajustado para bater exatamente com as colunas criadas no seu MockAPI
       const novoInsumo = {
-        nome: nome,
-        quantidade: Number(quantidade) // Convertendo para numero por causa do contrato
+        Material: nome,
+        Qtd: Number(quantidade)
       };
 
       const resposta = await fetch(urlAPI, {
@@ -116,8 +117,9 @@ export default function App() {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.itemRow}>
-              <Text style={styles.itemNome}>{item.nome}</Text>
-              <Text style={styles.itemQtd}>Qtd: {item.quantidade}</Text>
+              {/* ⚠️ Ajustado para ler as chaves corretas: item.Material e item.Qtd */}
+              <Text style={styles.itemNome}>{item.Material}</Text>
+              <Text style={styles.itemQtd}>Qtd: {item.Qtd}</Text>
             </View>
           )}
           style={styles.lista}
