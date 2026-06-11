@@ -13,7 +13,7 @@ export default function App() {
   // Estado para armazenar o ID do item selecionado para edicao
   const [idEditando, setIdEditando] = useState(null);
 
-  // URL corrigida para bater com o recurso 'materiais' do seu MockAPI
+  // URL do recurso 'materiais' do seu MockAPI
   const urlAPI = 'https://6a2b36d8b687a7d5cbc4f58b.mockapi.io/materiais';
 
   // Requisicao GET para puxar os produtos cadastrados
@@ -22,7 +22,7 @@ export default function App() {
       setCarregando(true);
       const resposta = await fetch(urlAPI);
       const dados = await resposta.json();
-      setProdutos(dados); // Salva o array da API no estado
+      setProdutos(dados);
     } catch (error) {
       console.error(error);
       Alert.alert("Erro", "Nao foi possivel carregar o estoque.");
@@ -122,7 +122,7 @@ export default function App() {
     setQuantidade(item.quantidade ? item.quantidade.toString() : '0');
   };
 
-  // useEffect para rodar a busca assim que o app abrir (Ciclo de vida)
+  // useEffect para rodar a busca assim que o app abrir
   useEffect(() => {
     buscarEstoque();
   }, []);
@@ -154,7 +154,7 @@ export default function App() {
 
         <TouchableOpacity 
           testID="btn-cadastrar" 
-          style={styles.button}
+          style={idEditando ? styles.buttonEdit : styles.button}
           onPress={idEditando ? salvarEdicao : cadastrarMaterial}
         >
           <Text style={styles.buttonText}>
@@ -177,13 +177,14 @@ export default function App() {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.itemRow}>
-              {/* O clique no texto seleciona para edicao */}
               <TouchableOpacity style={{ flex: 1 }} onPress={() => selecionarParaEdicao(item)}>
                 <Text style={styles.itemNome}>{item.name}</Text>
-                <Text style={styles.itemQtd}>Qtd: {item.quantidade || 0}</Text>
+                {/* Badge estilizada para a quantidade */}
+                <View style={styles.badgeQtd}>
+                  <Text style={styles.itemQtdText}>Qtd: {item.quantidade || 0}</Text>
+                </View>
               </TouchableOpacity>
               
-              {/* Botao de exclusao do item */}
               <TouchableOpacity style={styles.deleteButton} onPress={() => excluirMaterial(item.id)}>
                 <Text style={styles.deleteButtonText}>Excluir</Text>
               </TouchableOpacity>
@@ -200,33 +201,34 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', paddingTop: 50, paddingHorizontal: 20 },
   title: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: '#005b96' },
   subtitle: { fontSize: 18, fontWeight: 'bold', marginVertical: 15, color: '#333', borderBottomWidth: 1, borderBottomColor: '#ccc', paddingBottom: 5 },
-  formContext: { backgroundColor: '#f1f1f1', padding: 15, borderRadius: 8, marginBottom: 10 },
-  label: { fontSize: 14, fontWeight: 'bold', color: '#333', marginBottom: 5 },
-  input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ccc', borderRadius: 5, padding: 10, marginBottom: 12, fontSize: 15 },
-  button: { backgroundColor: '#013a63', padding: 12, borderRadius: 5, alignItems: 'center', marginTop: 5 },
+  formContext: { backgroundColor: '#f8f9fa', padding: 20, borderRadius: 10, marginBottom: 15, borderWidth: 1, borderColor: '#e9ecef' },
+  label: { fontSize: 14, fontWeight: 'bold', color: '#495057', marginBottom: 6 },
+  input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ced4da', borderRadius: 6, padding: 12, marginBottom: 14, fontSize: 15 },
+  button: { backgroundColor: '#005b96', padding: 14, borderRadius: 6, alignItems: 'center', marginTop: 5 },
+  buttonEdit: { backgroundColor: '#28a745', padding: 14, borderRadius: 6, alignItems: 'center', marginTop: 5 },
   buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   lista: { flex: 1 },
-  // 🆕 ESTILOS ATUALIZADOS: Linha modificada para parecer um Card/Container separado
   itemRow: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
-    padding: 15, 
-    backgroundColor: '#f8f9fa',
+    padding: 16, 
+    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: '#dee2e6',
     borderRadius: 8,
-    marginBottom: 10, 
+    marginBottom: 12, 
     alignItems: 'center',
-    // Pequena sombra para dar efeito de relevo na web/mobile
+    // Sombra leve para destacar bem o container individual
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 1
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2
   },
-  itemNome: { fontSize: 16, fontWeight: '600', color: '#444' },
-  itemQtd: { fontSize: 14, fontWeight: 'bold', color: '#005b96', marginTop: 3 },
+  itemNome: { fontSize: 16, fontWeight: '600', color: '#212529' },
+  badgeQtd: { backgroundColor: '#e3f2fd', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, marginTop: 6, alignSelf: 'flex-start' },
+  itemQtdText: { fontSize: 13, fontWeight: 'bold', color: '#005b96' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
-  deleteButton: { backgroundColor: '#d9534f', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 5, marginLeft: 10 },
+  deleteButton: { backgroundColor: '#dc3545', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 6, marginLeft: 10 },
   deleteButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 13 }
 });
