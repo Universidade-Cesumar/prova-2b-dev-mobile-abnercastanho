@@ -2,33 +2,67 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Alert } from 'react-native';
 
 export default function App() {
-  // Estados para controlar o texto dos inputs do formulário
+  // Estados para controlar os campos do formulario
   const [nome, setNome] = useState('');
   const [quantidade, setQuantidade] = useState('');
-
-  // Estados: Lista de produtos e indicador de carregamento
+  
+  // Estados para gerenciar a lista e o loading da tela
   const [produtos, setProdutos] = useState([]);
-  const [carregando, setCarregando] = useState(true); // Começa true para buscar os dados ao abrir
+  const [carregando, setCarregando] = useState(true);
 
+  // Endpoint oficial gerado la no MockAPI
+  const urlAPI = 'https://6a2b36d8b687a7d5cbc4f58b.mockapi.io/:endpoint';
 
-  const urlAPI = 'COLE_AQUI_A_SUA_NOVA_URL_DO_MOCKAPI/produtos';
-
-  // --- FUNÇÃO ASSÍNCRONA (GET): Consumo dos dados do estoque ---
+  // Requisicao GET para puxar os produtos cadastrados
   const buscarEstoque = async () => {
     try {
       setCarregando(true);
       const resposta = await fetch(urlAPI);
       const dados = await resposta.json();
-      setProdutos(dados); // Armazena o array recebido no estado local
+      setProdutos(dados); // Salva o array da API no estado
     } catch (error) {
-      console.error("Erro ao buscar dados do servidor:", error);
-      Alert.alert("Erro de Conexão", "Não foi possível sincronizar o estoque com o servidor.");
+      console.error(error);
+      Alert.alert("Erro", "Nao foi possivel carregar o estoque.");
     } finally {
       setCarregando(false);
     }
   };
 
-  // --- HOOK (Ciclo de Vida): Executa a busca imediatamente após a montagem da tela ---
+  // Requisicao POST para cadastrar um novo insumo
+  const cadastrarMaterial = async () => {
+    // Validacao simples para nao mandar campo vazio
+    if (!nome.trim() || !quantidade.trim()) {
+      Alert.alert("Aviso", "Preencha todos os campos antes de cadastrar.");
+      return;
+    }
+
+    try {
+      const novoInsumo = {
+        nome: nome,
+        quantidade: Number(quantidade) // Convertendo para numero por causa do contrato
+      };
+
+      const resposta = await fetch(urlAPI, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(novoInsumo)
+      });
+
+      if (resposta.ok) {
+        Alert.alert("Sucesso", "Material cadastrado!");
+        setNome(''); // Limpa o input
+        setQuantidade(''); // Limpa o input
+        buscarEstoque(); // Atualiza a lista na tela logo apos cadastrar
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Erro", "Falha ao enviar o cadastro.");
+    }
+  };
+
+  // useEffect para rodar a busca assim que o app abrir (Ciclo de vida)
   useEffect(() => {
     buscarEstoque();
   }, []);
@@ -37,7 +71,7 @@ export default function App() {
     <View style={styles.container}>
       <Text style={styles.title}>Almoxarifado - Enfermagem</Text>
       
-      {/* Formulário de Cadastro de Insumos */}
+      {/* Container do Form */}
       <View style={styles.formContext}>
         <Text style={styles.label}>Nome do Material:</Text>
         <TextInput
@@ -58,14 +92,18 @@ export default function App() {
           onChangeText={setQuantidade}
         />
 
-        <TouchableOpacity testID="btn-cadastrar" style={styles.button}>
+        <TouchableOpacity 
+          testID="btn-cadastrar" 
+          style={styles.button}
+          onPress={cadastrarMaterial}
+        >
           <Text style={styles.buttonText}>Cadastrar Insumo</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Seção: Título e Lista de Rolagem */}
       <Text style={styles.subtitle}>Estoque Atual</Text>
 
+      {/* Renderizacao condicional para o Indicator de Loading */}
       {carregando ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#005b96" />
