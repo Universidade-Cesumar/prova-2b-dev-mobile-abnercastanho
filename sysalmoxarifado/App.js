@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Alert } from 'react-native';
 
 export default function App() {
-  // Estados para controlar os campos do formulario
+  // Estados para controlar os campos do formulario superior (Cadastro/Edicao)
   const [nome, setNome] = useState('');
   const [quantidade, setQuantidade] = useState('');
+  
+  // Estado para armazenar o texto digitado na retirada para cada item individualmente
+  const [retiradas, setRetiradas] = useState({});
   
   // Estados para gerenciar a lista e o loading da tela
   const [produtos, setProdutos] = useState([]);
@@ -64,7 +67,7 @@ export default function App() {
     }
   };
 
-  // Requisicao PUT para atualizar um material existente
+  // Requisicao PUT para atualizar um material existente (Edicao Completa)
   const salvarEdicao = async () => {
     if (!nome.trim() || !quantidade.trim()) {
       Alert.alert("Aviso", "Preencha todos os campos antes de salvar.");
@@ -86,7 +89,7 @@ export default function App() {
       });
 
       if (resposta.ok) {
-        Alert.alert("Sucesso", "Material atualizado com sucesso!");
+        Alert.alert("Sucesso", "Material updated!");
         setNome('');
         setQuantidade('');
         setIdEditando(null);
@@ -95,6 +98,43 @@ export default function App() {
     } catch (error) {
       console.error(error);
       Alert.alert("Erro", "Falha ao atualizar o material.");
+    }
+  };
+
+  // Requisicao HTTP PUT para processar a baixa de estoque rapida de um item
+  const processarBaixaEstoque = async (item) => {
+    const qtdRetirarTexto = retiradas[item.id] || '';
+    const qtdRetirar = Number(qtdRetirarTexto);
+
+    // Utiliza a funcao pura obrigatoria para checar as regras de negocio
+    if (!validarRetirada(item.quantidade, qtdRetirar)) {
+      Alert.alert("Erro de Validação", "Quantidade inválida ou superior ao estoque disponível.");
+      return;
+    }
+
+    try {
+      const estoqueAtualizado = {
+        name: item.name,
+        quantidade: Number(item.quantidade) - qtdRetirar
+      };
+
+      const resposta = await fetch(`${urlAPI}/${item.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(estoqueAtualizado)
+      });
+
+      if (resposta.ok) {
+        Alert.alert("Sucesso", `Retirada realizada!`);
+        // Limpa o input de retirada desse item especifico
+        setRetiradas(prev => ({ ...prev, [item.id]: '' }));
+        buscarEstoque();
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Erro", "Nao foi possivel processar a baixa.");
     }
   };
 
@@ -115,6 +155,11 @@ export default function App() {
     }
   };
 
+  // Gerencia o texto digitado na retirada para cada card individualmente
+  const handleAlterarRetirada = (id, valor) => {
+    setRetiradas(prev => ({ ...prev, [id]: valor }));
+  };
+
   // Preenche o formulario com o item selecionado da lista
   const selecionarParaEdicao = (item) => {
     setIdEditando(item.id);
@@ -131,7 +176,7 @@ export default function App() {
     <View style={styles.container}>
       <Text style={styles.title}>Almoxarifado - Enfermagem</Text>
       
-      {/* Container do Form */}
+      {/* Container do Form Superior */}
       <View style={styles.formContext}>
         <Text style={styles.label}>Nome do Material:</Text>
         <TextInput
@@ -177,24 +222,41 @@ export default function App() {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.itemRow}>
-              {/* Informacoes do Material */}
-              <View style={{ flex: 1 }}>
+              {/* Informacoes Cadastrais do Material */}
+              <TouchableOpacity style={{ flex: 1, marginRight: 10 }} onPress={() => selecionarParaEdicao(item)}>
                 <Text style={styles.itemNome}>{item.name}</Text>
                 <View style={styles.badgeQtd}>
-                  <Text style={styles.itemQtdText}>Qtd: {item.quantidade || 0}</Text>
+                  <Text style={styles.itemQtdText}>Saldo: {item.quantidade || 0} un</Text>
                 </View>
-              </View>
+                <Text style={styles.clickEditHint}>📝 Clique para editar cadastro</Text>
+              </TouchableOpacity>
               
-              {/* Container de Botoes de Acao */}
-              <View style={styles.actionsContainer}>
-                {/* 🆕 BOTÃO DE EDITAR (Lápis) */}
-                <TouchableOpacity style={styles.editCardButton} onPress={() => selecionarParaEdicao(item)}>
-                  <Text style={styles.actionButtonText}>📝 Editar</Text>
-                </TouchableOpacity>
+              {/* Painel de Controle de Fluxo e Baixa Rapida do Estoque */}
+              <View style={styles.controlsBlock}>
+                <View style={styles.rowActions}>
+                  <TextInput
+                    testID="input-retirada"
+                    style={styles.inputRetirada}
+                    placeholder="Qtd"
+                    keyboardType="numeric"
+                    value={retiradas[item.id] || ''}
+                    onChangeText={(valor) => handleAlterarRetirada(item.id, valor)}
+                  />
+                  <TouchableOpacity 
+                    testID="btn-baixar" 
+                    style={styles.downloadButton} 
+                    onPress={() => processarBaixaEstoque(item)}
+                  >
+                    <Text style={styles.btnTextWhite}>🔻 Baixar</Text>
+                  </TouchableOpacity>
+                </View>
 
-                {/* BOTÃO DE EXCLUIR (Lixeira) */}
-                <TouchableOpacity style={styles.deleteButton} onPress={() => excluirMaterial(item.id)}>
-                  <Text style={styles.actionButtonText}>🗑️ Excluir</Text>
+                <TouchableOpacity 
+                  testID="btn-excluir" 
+                  style={styles.deleteButton} 
+                  onPress={() => excluirMaterial(item.id)}
+                >
+                  <Text style={styles.btnTextWhite}>🗑️ Excluir</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -204,6 +266,20 @@ export default function App() {
       )}
     </View>
   );
+}
+
+/**
+ * FUNÇÃO PURA OBRIGATÓRIA DA SPRINT 2 (Requisito de Autograding / Jest)
+ * Valida se a quantidade de retirada e permitida com base no estoque atual.
+ */
+export function validarRetirada(estoqueAtual, quantidadeRetirada) {
+  const atual = Number(estoqueAtual);
+  const retirada = Number(quantidadeRetirada);
+
+  if (isNaN(atual) || isNaN(retirada) || retirada <= 0 || retirada > atual) {
+    return false;
+  }
+  return true;
 }
 
 const styles = StyleSheet.create({
@@ -217,7 +293,6 @@ const styles = StyleSheet.create({
   buttonEdit: { backgroundColor: '#28a745', padding: 14, borderRadius: 6, alignItems: 'center', marginTop: 5 },
   buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   lista: { flex: 1 },
-  // 🆕 CARDS MAIS VISÍVEIS: Fundo branco puro com borda cinza escura e sombra destacada
   itemRow: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
@@ -237,11 +312,14 @@ const styles = StyleSheet.create({
   itemNome: { fontSize: 16, fontWeight: 'bold', color: '#212529' },
   badgeQtd: { backgroundColor: '#e3f2fd', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, marginTop: 6, alignSelf: 'flex-start' },
   itemQtdText: { fontSize: 13, fontWeight: 'bold', color: '#005b96' },
+  clickEditHint: { fontSize: 11, color: '#6c757d', marginTop: 6, fontStyle: 'italic' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
   
-  // 🆕 ESTILOS DOS BOTÕES DE AÇÃO INTERNOS
-  actionsContainer: { flexDirection: 'row', alignItems: 'center' },
-  editCardButton: { backgroundColor: '#ffc107', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 6, flexDirection: 'row', alignItems: 'center', marginRight: 8 },
-  deleteButton: { backgroundColor: '#dc3545', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 6, flexDirection: 'row', alignItems: 'center' },
-  actionButtonText: { color: '#212529', fontWeight: 'bold', fontSize: 13 }
+  // Painel de controles lateral do card
+  controlsBlock: { width: '45%', alignItems: 'stretch' },
+  rowActions: { flexDirection: 'row', marginBottom: 6 },
+  inputRetirada: { flex: 1, backgroundColor: '#f8f9fa', borderWidth: 1, borderColor: '#ced4da', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 6, fontSize: 13, marginRight: 4, textAlign: 'center' },
+  downloadButton: { backgroundColor: '#fd7e14', paddingVertical: 8, paddingHorizontal: 10, borderRadius: 6, justifyContent: 'center', alignItems: 'center' },
+  deleteButton: { backgroundColor: '#dc3545', paddingVertical: 6, borderRadius: 6, alignItems: 'center' },
+  btnTextWhite: { color: '#fff', fontWeight: 'bold', fontSize: 12 }
 });
