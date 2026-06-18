@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Alert } from 'react-native';
 // IMPORTANDO A FUNÇÃO SEPARADA DO ARQUIVO UTILS
 import { validarRetirada } from './utils/validacoes';
+// Garante que o Alert funcione no Navegador Web se não estiver no celular
+import { Platform } from 'react-native';
+if (Platform.OS === 'web') {
+  Alert.alert = (title, message) => alert(`${title}\n\n${message}`);
+}
 
 export default function App() {
   const [nome, setNome] = useState('');
@@ -84,8 +89,12 @@ export default function App() {
     const qtdRetirarTexto = retiradas[item.id] || '';
     const qtdRetirar = Number(qtdRetirarTexto);
 
+    // Utiliza a função pura obrigatória para checar as regras de negócio
     if (!validarRetirada(item.quantidade, qtdRetirar)) {
-      Alert.alert("Erro de Validação", "Quantidade inválida ou superior ao estoque disponível.");
+      Alert.alert(
+        "Quantidade Indisponível", 
+        `Não é possível realizar a baixa. O saldo atual é de ${item.quantidade || 0} un, mas você tentou retirar ${qtdRetirarTexto || 0} un.`
+      );
       return;
     }
 
@@ -108,7 +117,7 @@ export default function App() {
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Erro", "Nao foi possivel processar a baixa.");
+      Alert.alert("Erro", "Não foi possível processar a baixa.");
     }
   };
 
