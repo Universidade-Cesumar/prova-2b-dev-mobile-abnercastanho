@@ -1,25 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Alert } from 'react-native';
+// IMPORTANDO A FUNÇÃO SEPARADA DO ARQUIVO UTILS
+import { validarRetirada } from './utils/validacoes';
 
 export default function App() {
-  // Estados para controlar os campos do formulario superior (Cadastro/Edicao)
   const [nome, setNome] = useState('');
   const [quantidade, setQuantidade] = useState('');
-  
-  // Estado para armazenar o texto digitado na retirada para cada item individualmente
   const [retiradas, setRetiradas] = useState({});
-  
-  // Estados para gerenciar a lista e o loading da tela
   const [produtos, setProdutos] = useState([]);
   const [carregando, setCarregando] = useState(true);
-
-  // Estado para armazenar o ID do item selecionado para edicao
   const [idEditando, setIdEditando] = useState(null);
 
-  // URL do recurso 'materiais' do seu MockAPI
   const urlAPI = 'https://6a2b36d8b687a7d5cbc4f58b.mockapi.io/materiais';
 
-  // Requisicao GET para puxar os produtos cadastrados
   const buscarEstoque = async () => {
     try {
       setCarregando(true);
@@ -34,7 +27,6 @@ export default function App() {
     }
   };
 
-  // Requisicao POST para cadastrar um novo insumo
   const cadastrarMaterial = async () => {
     if (!nome.trim() || !quantidade.trim()) {
       Alert.alert("Aviso", "Preencha todos os campos antes de cadastrar.");
@@ -42,16 +34,10 @@ export default function App() {
     }
 
     try {
-      const novoInsumo = {
-        name: nome,
-        quantidade: Number(quantidade)
-      };
-
+      const novoInsumo = { name: nome, quantidade: Number(quantidade) };
       const resposta = await fetch(urlAPI, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(novoInsumo)
       });
 
@@ -67,7 +53,6 @@ export default function App() {
     }
   };
 
-  // Requisicao PUT para atualizar um material existente (Edicao Completa)
   const salvarEdicao = async () => {
     if (!nome.trim() || !quantidade.trim()) {
       Alert.alert("Aviso", "Preencha todos os campos antes de salvar.");
@@ -75,21 +60,15 @@ export default function App() {
     }
 
     try {
-      const materialAtualizado = {
-        name: nome,
-        quantidade: Number(quantidade)
-      };
-
+      const materialAtualizado = { name: nome, quantidade: Number(quantidade) };
       const resposta = await fetch(`${urlAPI}/${idEditando}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(materialAtualizado)
       });
 
       if (resposta.ok) {
-        Alert.alert("Sucesso", "Material updated!");
+        Alert.alert("Sucesso", "Material atualizado!");
         setNome('');
         setQuantidade('');
         setIdEditando(null);
@@ -101,12 +80,10 @@ export default function App() {
     }
   };
 
-  // Requisicao HTTP PUT para processar a baixa de estoque rapida de um item
   const processarBaixaEstoque = async (item) => {
     const qtdRetirarTexto = retiradas[item.id] || '';
     const qtdRetirar = Number(qtdRetirarTexto);
 
-    // Utiliza a funcao pura obrigatoria para checar as regras de negocio
     if (!validarRetirada(item.quantidade, qtdRetirar)) {
       Alert.alert("Erro de Validação", "Quantidade inválida ou superior ao estoque disponível.");
       return;
@@ -120,15 +97,12 @@ export default function App() {
 
       const resposta = await fetch(`${urlAPI}/${item.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(estoqueAtualizado)
       });
 
       if (resposta.ok) {
         Alert.alert("Sucesso", `Retirada realizada!`);
-        // Limpa o input de retirada desse item especifico
         setRetiradas(prev => ({ ...prev, [item.id]: '' }));
         buscarEstoque();
       }
@@ -138,13 +112,9 @@ export default function App() {
     }
   };
 
-  // Requisicao HTTP DELETE para remover o material da API
   const excluirMaterial = async (id) => {
     try {
-      const resposta = await fetch(`${urlAPI}/${id}`, {
-        method: 'DELETE'
-      });
-
+      const resposta = await fetch(`${urlAPI}/${id}`, { method: 'DELETE' });
       if (resposta.ok) {
         Alert.alert("Sucesso", "Material removido do estoque!");
         buscarEstoque();
@@ -155,19 +125,16 @@ export default function App() {
     }
   };
 
-  // Gerencia o texto digitado na retirada para cada card individualmente
   const handleAlterarRetirada = (id, valor) => {
     setRetiradas(prev => ({ ...prev, [id]: valor }));
   };
 
-  // Preenche o formulario com o item selecionado da lista
   const selecionarParaEdicao = (item) => {
     setIdEditando(item.id);
     setNome(item.name);
     setQuantidade(item.quantidade ? item.quantidade.toString() : '0');
   };
 
-  // useEffect para rodar a busca assim que o app abrir
   useEffect(() => {
     buscarEstoque();
   }, []);
@@ -176,7 +143,6 @@ export default function App() {
     <View style={styles.container}>
       <Text style={styles.title}>Almoxarifado - Enfermagem</Text>
       
-      {/* Container do Form Superior */}
       <View style={styles.formContext}>
         <Text style={styles.label}>Nome do Material:</Text>
         <TextInput
@@ -222,7 +188,6 @@ export default function App() {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.itemRow}>
-              {/* Informacoes Cadastrais do Material */}
               <TouchableOpacity style={{ flex: 1, marginRight: 10 }} onPress={() => selecionarParaEdicao(item)}>
                 <Text style={styles.itemNome}>{item.name}</Text>
                 <View style={styles.badgeQtd}>
@@ -231,7 +196,6 @@ export default function App() {
                 <Text style={styles.clickEditHint}>📝 Clique para editar cadastro</Text>
               </TouchableOpacity>
               
-              {/* Painel de Controle de Fluxo e Baixa Rapida do Estoque */}
               <View style={styles.controlsBlock}>
                 <View style={styles.rowActions}>
                   <TextInput
@@ -268,20 +232,6 @@ export default function App() {
   );
 }
 
-/**
- * FUNÇÃO PURA OBRIGATÓRIA DA SPRINT 2 (Requisito de Autograding / Jest)
- * Valida se a quantidade de retirada e permitida com base no estoque atual.
- */
-export function validarRetirada(estoqueAtual, quantidadeRetirada) {
-  const atual = Number(estoqueAtual);
-  const retirada = Number(quantidadeRetirada);
-
-  if (isNaN(atual) || isNaN(retirada) || retirada <= 0 || retirada > atual) {
-    return false;
-  }
-  return true;
-}
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f4f6f9', paddingTop: 50, paddingHorizontal: 20 },
   title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: '#005b96' },
@@ -293,29 +243,12 @@ const styles = StyleSheet.create({
   buttonEdit: { backgroundColor: '#28a745', padding: 14, borderRadius: 6, alignItems: 'center', marginTop: 5 },
   buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   lista: { flex: 1 },
-  itemRow: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    padding: 16, 
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: '#ced4da',
-    borderRadius: 8,
-    marginBottom: 12, 
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3
-  },
+  itemRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 16, backgroundColor: '#fff', borderWidth: 1.5, borderColor: '#ced4da', borderRadius: 8, marginBottom: 12, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
   itemNome: { fontSize: 16, fontWeight: 'bold', color: '#212529' },
   badgeQtd: { backgroundColor: '#e3f2fd', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, marginTop: 6, alignSelf: 'flex-start' },
   itemQtdText: { fontSize: 13, fontWeight: 'bold', color: '#005b96' },
   clickEditHint: { fontSize: 11, color: '#6c757d', marginTop: 6, fontStyle: 'italic' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
-  
-  // Painel de controles lateral do card
   controlsBlock: { width: '45%', alignItems: 'stretch' },
   rowActions: { flexDirection: 'row', marginBottom: 6 },
   inputRetirada: { flex: 1, backgroundColor: '#f8f9fa', borderWidth: 1, borderColor: '#ced4da', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 6, fontSize: 13, marginRight: 4, textAlign: 'center' },
