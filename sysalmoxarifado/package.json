@@ -12,7 +12,15 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "jest"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@babel/core": "^8.0.1",
+    "@babel/preset-env": "^8.0.2",
+    "@testing-library/react-native": "^14.0.0",
+    "babel-jest": "^30.4.1",
+    "jest": "^30.4.2"
+  }
 }
