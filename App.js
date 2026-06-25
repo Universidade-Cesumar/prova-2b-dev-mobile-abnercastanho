@@ -15,13 +15,11 @@ export default function App() {
   const [produtos, setProdutos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [idEditando, setIdEditando] = useState(null);
+
+  // 🆕 SPRINT 3: Estado para o campo de busca
   const [busca, setBusca] = useState('');
 
   const urlAPI = 'https://6a2b36d8b687a7d5cbc4f58b.mockapi.io/materiais';
-
-  const produtosFiltrados = produtos.filter(produto => 
-  produto.name && produto.name.toLowerCase().includes(busca.toLowerCase())
-  );
 
   const buscarEstoque = async () => {
     try {
@@ -31,7 +29,7 @@ export default function App() {
       setProdutos(dados);
     } catch (error) {
       console.error(error);
-      Alert.alert("Erro", "Nao foi possivel carregar o estoque.");
+      Alert.alert("Erro de Conexão", "Não foi possível carregar o estoque. Verifique sua rede.");
     } finally {
       setCarregando(false);
     }
@@ -59,7 +57,7 @@ export default function App() {
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Erro", "Falha ao enviar o cadastro.");
+      Alert.alert("Erro de Conexão", "Falha ao enviar o cadastro para o servidor.");
     }
   };
 
@@ -86,7 +84,7 @@ export default function App() {
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Erro", "Falha ao atualizar o material.");
+      Alert.alert("Erro de Conexão", "Falha ao atualizar o material no servidor.");
     }
   };
 
@@ -121,7 +119,7 @@ export default function App() {
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Erro", "Não foi possível processar a baixa.");
+      Alert.alert("Erro de Conexão", "Não foi possível processar a baixa no servidor.");
     }
   };
 
@@ -134,7 +132,7 @@ export default function App() {
       }
     } catch (error) {
       console.error(error);
-      Alert.alert("Erro", "Nao foi possivel excluir o material.");
+      Alert.alert("Erro de Conexão", "Não foi possível excluir o material do servidor.");
     }
   };
 
@@ -152,10 +150,16 @@ export default function App() {
     buscarEstoque();
   }, []);
 
+  // 🆕 SPRINT 3: Filtro em tempo real
+  const produtosFiltrados = produtos.filter(produto => 
+    produto.name && produto.name.toLowerCase().includes(busca.toLowerCase())
+  );
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Almoxarifado - Enfermagem</Text>
       
+      {/* Formulário de Cadastro/Edição */}
       <View style={styles.formContext}>
         <Text style={styles.label}>Nome do Material:</Text>
         <TextInput
@@ -187,6 +191,23 @@ export default function App() {
         </TouchableOpacity>
       </View>
 
+      {/* 🆕 SPRINT 3: Campo de Pesquisa e Dashboard */}
+      <View style={styles.searchContext}>
+        <Text style={styles.label}>Pesquisar Material:</Text>
+        <TextInput
+          testID="input-busca"
+          style={styles.input}
+          placeholder="Digite para filtrar..."
+          value={busca}
+          onChangeText={setBusca}
+        />
+        <View style={styles.totalizerBadge}>
+          <Text style={styles.totalizerText}>
+            Itens localizados: <Text testID="total-itens" style={{ fontWeight: 'bold' }}>{produtosFiltrados.length}</Text>
+          </Text>
+        </View>
+      </View>
+
       <Text style={styles.subtitle}>Estoque Atual</Text>
 
       {carregando ? (
@@ -197,7 +218,7 @@ export default function App() {
       ) : (
         <FlatList
           testID="lista-materiais"
-          data={produtos}
+          data={produtosFiltrados} // Lendo a lista filtrada dinamicamente
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={styles.itemRow}>
@@ -258,7 +279,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: '#005b96' },
   subtitle: { fontSize: 18, fontWeight: 'bold', marginVertical: 15, color: '#333', borderBottomWidth: 2, borderBottomColor: '#005b96', paddingBottom: 5 },
   formContext: { backgroundColor: '#fff', padding: 20, borderRadius: 10, marginBottom: 15, borderWidth: 1, borderColor: '#dee2e6', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 },
-  label: { fontSize: 14, fontWeight: 'bold', color: '#495057', marginBottom: 6 },
+  label: { fontSize: 14, fontWeight: 'bold', color: '#4a5568', marginBottom: 6 },
   input: { backgroundColor: '#f8f9fa', borderWidth: 1, borderColor: '#ced4da', borderRadius: 6, padding: 12, marginBottom: 14, fontSize: 15 },
   button: { backgroundColor: '#005b96', padding: 14, borderRadius: 6, alignItems: 'center', marginTop: 5 },
   buttonEdit: { backgroundColor: '#28a745', padding: 14, borderRadius: 6, alignItems: 'center', marginTop: 5 },
@@ -276,5 +297,9 @@ const styles = StyleSheet.create({
   editCardButton: { flex: 1, backgroundColor: '#ffc107', paddingVertical: 6, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   deleteButton: { flex: 1, backgroundColor: '#dc3545', paddingVertical: 6, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   btnTextWhite: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
-  actionButtonText: { color: '#212529', fontWeight: 'bold', fontSize: 12 }
+  actionButtonText: { color: '#212529', fontWeight: 'bold', fontSize: 12 },
+  // 🆕 Estilos do Bloco de Busca da Sprint 3
+  searchContext: { backgroundColor: '#fff', padding: 15, borderRadius: 10, marginBottom: 10, borderWidth: 1, borderColor: '#dee2e6' },
+  totalizerBadge: { backgroundColor: '#e2e8f0', padding: 8, borderRadius: 6, alignItems: 'center', marginTop: 5 },
+  totalizerText: { fontSize: 14, color: '#4a5568' }
 });
