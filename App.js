@@ -16,9 +16,13 @@ export default function App() {
   const [carregando, setCarregando] = useState(true);
   const [idEditando, setIdEditando] = useState(null);
   const [busca, setBusca] = useState('');
+
+  // Estados para simular o foco colorido nos inputs 
   const [focoNome, setFocoNome] = useState(false);
   const [focoQtd, setFocoQtd] = useState(false);
   const [focoBusca, setFocoBusca] = useState(false);
+
+  // Detecta a largura da tela para responsividade 
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
 
@@ -157,13 +161,22 @@ export default function App() {
     produto.name && produto.name.toLowerCase().includes(busca.toLowerCase())
   );
 
+  // Helper para definir cores, fundos e textos baseado nas regras de saldo
+  const obterEstiloEstoque = (qtd) => {
+    if (qtd === 0) return { cor: '#ef4444', fundo: '#fef2f2', label: 'Esgotado' };
+    if (qtd <= 20) return { cor: '#f59e0b', fundo: '#fffbeb', label: 'Estoque Baixo' };
+    return { cor: '#10b981', fundo: '#ecfdf5', label: 'Estoque Seguro' };
+  };
+
   return (
     <View style={styles.container}>
+      {/* 1. HEADER / TÍTULO FIXO  */}
       <View style={styles.header}>
         <Text style={styles.title}>🏥 Almoxarifado - Enfermagem</Text>
       </View>
       
       <View style={styles.contentLayout}>
+        {/* 2. CARDS DE FORMULÁRIO  */}
         <View style={styles.formContext}>
           <Text style={styles.sectionHeader}>📋 Gerenciamento de Insumos</Text>
           
@@ -215,6 +228,7 @@ export default function App() {
           </TouchableOpacity>
         </View>
 
+        {/* BARRA DE BUSCA */}
         <View style={styles.searchContext}>
           <View style={styles.searchHeaderRow}>
             <Text style={styles.labelBusca}>Filtrar Inventário</Text>
@@ -244,66 +258,83 @@ export default function App() {
         {carregando ? (
           <View style={styles.center}>
             <ActivityIndicator size="large" color="#2563eb" />
-            <Text style={{ marginTop: 10 }}>Buscando dados no servidor...</Text>
+            <Text style={{ marginTop: 12, color: '#64748b', fontWeight: '500' }}>Buscando dados no servidor hospitalar...</Text>
           </View>
         ) : (
           <FlatList
             testID="lista-materiais"
             data={produtosFiltrados}
             keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <View 
-                style={[
-                  styles.itemRow, 
-                  item.quantidade < 10 ? styles.itemCritico : null
-                ]}
-                accessibilityLabel={item.quantidade < 10 ? "estoque-critico" : undefined}
-              >
-                <View style={{ flex: 1, marginRight: 10 }}>
-                  <Text style={styles.itemNome}>{item.name}</Text>
-                  <View style={styles.badgeQtd}>
-                    <Text style={styles.itemQtdText}>Saldo: {item.quantidade || 0} un</Text>
+            renderItem={({ item }) => {
+              // Cálculo dinâmico para estilização das bordas, badges e regras críticas
+              const infoEstoque = obterEstiloEstoque(item.quantidade || 0);
+              const esCritico = item.quantidade < 10;
+              
+              return (
+                /* Cards  */
+                <View 
+                  style={[
+                    styles.itemRow, 
+                    { borderLeftColor: infoEstoque.cor },
+                    esCritico ? styles.itemCritico : null
+                  ]}
+                  accessibilityLabel={esCritico ? "estoque-critico" : undefined}
+                >
+                  <View style={styles.itemInfoBlock}>
+                    <Text style={styles.itemNome}>{item.name}</Text>
+                    
+                    {/* Badge de saldo colorido conforme volume */}
+                    <View style={[styles.badgeQtd, { backgroundColor: infoEstoque.fundo, borderColor: infoEstoque.cor }]}>
+                      <Text style={[styles.itemQtdText, { color: infoEstoque.cor }]}>
+                        Saldo: {item.quantidade || 0} un ({infoEstoque.label})
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  {/* Bloco de controles e ações com suporte a quebra responsiva automática (Flex wrap) */}
+                  <View style={[styles.controlsBlock, { width: isMobile ? '100%' : '50%', marginTop: isMobile ? 12 : 0 }]}>
+                    
+                    {/* Input de baixa rápida alinhado à direita do card */}
+                    <View style={styles.rowActions}>
+                      <TextInput
+                        testID="input-retirada"
+                        style={styles.inputRetirada}
+                        placeholder="Qtd"
+                        placeholderTextColor="#94a3b8"
+                        keyboardType="numeric"
+                        value={retiradas[item.id] || ''}
+                        onChangeText={(valor) => handleAlterarRetirada(item.id, valor)}
+                      />
+                      <TouchableOpacity 
+                        testID="btn-baixar" 
+                        style={styles.downloadButton} 
+                        onPress={() => processarBaixaEstoque(item)}
+                      >
+                        <Text style={styles.btnTextWhite}>⬇️ Baixar</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Botões compactos de Gerenciamento com ícones embutidos */}
+                    <View style={styles.rowActions}>
+                      <TouchableOpacity 
+                        style={styles.editCardButton} 
+                        onPress={() => selecionarParaEdicao(item)}
+                      >
+                        <Text style={styles.actionButtonText}>✏️ Editar</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity 
+                        testID="btn-excluir" 
+                        style={styles.deleteButton} 
+                        onPress={() => excluirMaterial(item.id)}
+                      >
+                        <Text style={styles.btnTextWhite}>🗑️ Excluir</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
-                
-                <View style={styles.controlsBlock}>
-                  <View style={styles.rowActions}>
-                    <TextInput
-                      testID="input-retirada"
-                      style={styles.inputRetirada}
-                      placeholder="Qtd"
-                      keyboardType="numeric"
-                      value={retiradas[item.id] || ''}
-                      onChangeText={(valor) => handleAlterarRetirada(item.id, valor)}
-                    />
-                    <TouchableOpacity 
-                      testID="btn-baixar" 
-                      style={styles.downloadButton} 
-                      onPress={() => processarBaixaEstoque(item)}
-                    >
-                      <Text style={styles.btnTextWhite}>🔻 Baixar</Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.rowActions}>
-                    <TouchableOpacity 
-                      style={styles.editCardButton} 
-                      onPress={() => selecionarParaEdicao(item)}
-                    >
-                      <Text style={styles.actionButtonText}>📝 Editar</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity 
-                      testID="btn-excluir" 
-                      style={styles.deleteButton} 
-                      onPress={() => excluirMaterial(item.id)}
-                    >
-                      <Text style={styles.btnTextWhite}>🗑️ Excluir</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            )}
+              );
+            }}
             style={styles.lista}
           />
         )}
@@ -313,7 +344,7 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  
+  // Tipografia e Cores Gerais 
   container: { flex: 1, backgroundColor: '#f0f4f8' },
   contentLayout: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
   header: { 
@@ -332,7 +363,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: '800', color: '#ffffff', textAlign: 'center', letterSpacing: 0.5 },
   subtitle: { fontSize: 18, fontWeight: '700', marginVertical: 15, color: '#1e293b', borderBottomWidth: 2, borderBottomColor: '#2563eb', paddingBottom: 6 },
   
-
+  // Estrutura de Formulários 
   formContext: { 
     backgroundColor: '#ffffff', 
     padding: 20, 
@@ -350,19 +381,8 @@ const styles = StyleSheet.create({
   formGrid: { justifyContent: 'space-between' },
   inputGroup: { flex: 1, marginBottom: 12 },
   label: { fontSize: 13, fontWeight: '600', color: '#64748b', marginBottom: 6 },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    borderWidth: 1.5,
-    borderColor: '#cbd5e1',
-    borderRadius: 8,
-    paddingHorizontal: 12
-  },
-  inputFocado: {
-    borderColor: '#2563eb',
-    backgroundColor: '#ffffff'
-  },
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8fafc', borderWidth: 1.5, borderColor: '#cbd5e1', borderRadius: 8, paddingHorizontal: 12 },
+  inputFocado: { borderColor: '#2563eb', backgroundColor: '#ffffff' },
   inputIcon: { marginRight: 8, fontSize: 16 },
   input: { flex: 1, paddingVertical: 10, fontSize: 15, color: '#1e293b', borderWidth: 0, outlineStyle: 'none' },
   button: { backgroundColor: '#2563eb', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
@@ -370,39 +390,51 @@ const styles = StyleSheet.create({
   btnCentralizado: { alignSelf: 'center', marginTop: 8, minWidth: 180, shadowColor: '#2563eb', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 },
   buttonText: { color: '#ffffff', fontWeight: '700', fontSize: 15 },
   
-
-  searchContext: { 
-    backgroundColor: '#ffffff', 
-    padding: 18, 
-    borderRadius: 12, 
-    marginBottom: 10, 
-    borderWidth: 1, 
-    borderColor: '#e2e8f0',
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 2 }, 
-    shadowOpacity: 0.05, 
-    shadowRadius: 6, 
-    elevation: 2 
-  },
+  // Painel de Busca 
+  searchContext: { backgroundColor: '#ffffff', padding: 18, borderRadius: 12, marginBottom: 10, borderWidth: 1, borderColor: '#e2e8f0', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
   searchHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   labelBusca: { fontSize: 14, fontWeight: '700', color: '#1e293b' },
   totalizerBadge: { backgroundColor: '#2563eb', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
   totalizerText: { fontSize: 12, color: '#ffffff', fontWeight: '500' },
 
-  // Estilos da Lista Herdados (Que serão modificados no Bloco 3)
+  // cards do inventário e botões compactos
   lista: { flex: 1 },
-  itemRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 16, backgroundColor: '#fff', borderWidth: 1.5, borderColor: '#ced4da', borderRadius: 8, marginBottom: 12, alignItems: 'center' },
-  itemNome: { fontSize: 16, fontWeight: 'bold', color: '#212529' },
-  badgeQtd: { backgroundColor: '#e3f2fd', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, marginTop: 6, alignSelf: 'flex-start' },
-  itemQtdText: { fontSize: 13, fontWeight: 'bold', color: '#005b96' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 20 },
-  controlsBlock: { width: '50%', alignItems: 'stretch' },
-  rowActions: { flexDirection: 'row', marginBottom: 6, gap: 4 },
-  inputRetirada: { flex: 1, backgroundColor: '#f8f9fa', borderWidth: 1, borderColor: '#ced4da', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 6, fontSize: 13, textAlign: 'center' },
-  downloadButton: { backgroundColor: '#fd7e14', paddingVertical: 8, paddingHorizontal: 10, borderRadius: 6, justifyContent: 'center', alignItems: 'center' },
-  editCardButton: { flex: 1, backgroundColor: '#ffc107', paddingVertical: 6, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
-  deleteButton: { flex: 1, backgroundColor: '#dc3545', paddingVertical: 6, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
-  btnTextWhite: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
-  actionButtonText: { color: '#212529', fontWeight: 'bold', fontSize: 12 },
+  itemRow: { 
+    flexDirection: 'row', 
+    flexWrap: 'wrap',
+    justifyContent: 'space-between', 
+    padding: 16, 
+    backgroundColor: '#ffffff', 
+    borderWidth: 1, 
+    borderColor: '#e2e8f0', 
+    borderLeftWidth: 6, // Espessura reservada para a cor dinâmica do saldo
+    borderRadius: 10, 
+    marginBottom: 12, 
+    alignItems: 'center', 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.06, 
+    shadowRadius: 5, 
+    elevation: 2 
+  },
+  itemInfoBlock: { flex: 1, minWidth: 180 },
+  itemNome: { fontSize: 16, fontWeight: '700', color: '#1e293b', marginBottom: 2 },
+  badgeQtd: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, borderWidth: 1, marginTop: 4, alignSelf: 'flex-start' },
+  itemQtdText: { fontSize: 12, fontWeight: '700' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 30 },
+  
+  // Controles de Baixa Rápida e Ações Compactas
+  controlsBlock: { alignItems: 'stretch' },
+  rowActions: { flexDirection: 'row', marginBottom: 6, gap: 6 },
+  inputRetirada: { flex: 1, backgroundColor: '#f8fafc', borderWidth: 1.5, borderColor: '#cbd5e1', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 6, fontSize: 13, fontWeight: '600', color: '#1e293b', textAlign: 'center' },
+  
+  // Botões de Ação com cores corporativas do setor e leve elevação (Shadow)
+  downloadButton: { backgroundColor: '#f97316', paddingVertical: 6, paddingHorizontal: 14, borderRadius: 6, justifyContent: 'center', alignItems: 'center', shadowColor: '#f97316', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2 },
+  editCardButton: { flex: 1, backgroundColor: '#f59e0b', paddingVertical: 8, borderRadius: 6, alignItems: 'center', justifyContent: 'center', shadowColor: '#f59e0b', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2 },
+  deleteButton: { flex: 1, backgroundColor: '#ef4444', paddingVertical: 8, borderRadius: 6, alignItems: 'center', justifyContent: 'center', shadowColor: '#ef4444', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2 },
+  btnTextWhite: { color: '#ffffff', fontWeight: '700', fontSize: 12 },
+  actionButtonText: { color: '#ffffff', fontWeight: '700', fontSize: 12 },
+  
+  // Estilo Crítico (< 10) mantendo a integridade da regra da Sprint 3
   itemCritico: { backgroundColor: '#fff5f5', borderColor: '#ef4444' }
 });
