@@ -172,7 +172,7 @@ export default function App() {
     <View style={styles.container}>
       {/* 1. HEADER / TÍTULO FIXO  */}
       <View style={styles.header}>
-        <Text style={styles.title}>🏥 Almoxarifado - Enfermagem</Text>
+        <Text style={styles.title}>Almoxarifado - Enfermagem</Text>
       </View>
       
       <View style={styles.contentLayout}>
