@@ -16,7 +16,7 @@ export default function App() {
   const [carregando, setCarregando] = useState(true);
   const [idEditando, setIdEditando] = useState(null);
 
-  // 🆕 SPRINT 3: Estado para o campo de busca
+  // SPRINT 3: Estado para o campo de busca
   const [busca, setBusca] = useState('');
 
   const urlAPI = 'https://6a2b36d8b687a7d5cbc4f58b.mockapi.io/materiais';
@@ -76,7 +76,7 @@ export default function App() {
       });
 
       if (resposta.ok) {
-        Alert.alert("Sucesso", "Material atualizado!");
+        Alert.alert("Sucesso", "Material updated!");
         setNome('');
         setQuantidade('');
         setIdEditando(null);
@@ -150,7 +150,7 @@ export default function App() {
     buscarEstoque();
   }, []);
 
-  // 🆕 SPRINT 3: Filtro em tempo real
+  // SPRINT 3: Filtro em tempo real
   const produtosFiltrados = produtos.filter(produto => 
     produto.name && produto.name.toLowerCase().includes(busca.toLowerCase())
   );
@@ -191,7 +191,7 @@ export default function App() {
         </TouchableOpacity>
       </View>
 
-      {/* 🆕 SPRINT 3: Campo de Pesquisa e Dashboard */}
+      {/* SPRINT 3: Campo de Pesquisa e Dashboard */}
       <View style={styles.searchContext}>
         <Text style={styles.label}>Pesquisar Material:</Text>
         <TextInput
@@ -218,10 +218,16 @@ export default function App() {
       ) : (
         <FlatList
           testID="lista-materiais"
-          data={produtosFiltrados} // Lendo a lista filtrada dinamicamente
+          data={produtosFiltrados}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <View style={styles.itemRow}>
+            <View 
+              style={[
+                styles.itemRow, 
+                item.quantidade < 10 ? styles.itemCritico : null
+              ]}
+              accessibilityLabel={item.quantidade < 10 ? "estoque-critico" : undefined}
+            >
               <View style={{ flex: 1, marginRight: 10 }}>
                 <Text style={styles.itemNome}>{item.name}</Text>
                 <View style={styles.badgeQtd}>
@@ -298,8 +304,9 @@ const styles = StyleSheet.create({
   deleteButton: { flex: 1, backgroundColor: '#dc3545', paddingVertical: 6, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   btnTextWhite: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
   actionButtonText: { color: '#212529', fontWeight: 'bold', fontSize: 12 },
-  // 🆕 Estilos do Bloco de Busca da Sprint 3
   searchContext: { backgroundColor: '#fff', padding: 15, borderRadius: 10, marginBottom: 10, borderWidth: 1, borderColor: '#dee2e6' },
   totalizerBadge: { backgroundColor: '#e2e8f0', padding: 8, borderRadius: 6, alignItems: 'center', marginTop: 5 },
-  totalizerText: { fontSize: 14, color: '#4a5568' }
+  totalizerText: { fontSize: 14, color: '#4a5568' },
+  // Alerta Visual de Estoque Crítico (< 10)
+  itemCritico: { backgroundColor: '#fff5f5', borderColor: '#e53e3e', borderWidth: 2 }
 });
