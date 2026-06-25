@@ -281,8 +281,22 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f4f6f9', paddingTop: 50, paddingHorizontal: 20 },
-  title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: '#005b96' },
+  container: { flex: 1, backgroundColor: '#f0f4f8' }, 
+  contentLayout: { flex: 1, paddingHorizontal: 20, paddingTop: 20 }, 
+  header: { 
+    backgroundColor: '#1a3a5c', 
+    paddingVertical: 18, 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 5,
+    borderBottomWidth: 3,
+    borderBottomColor: '#2563eb'
+  },
+  title: { fontSize: 22, fontWeight: '800', color: '#ffffff', textAlign: 'center', letterSpacing: 0.5 },
   subtitle: { fontSize: 18, fontWeight: 'bold', marginVertical: 15, color: '#333', borderBottomWidth: 2, borderBottomColor: '#005b96', paddingBottom: 5 },
   formContext: { backgroundColor: '#fff', padding: 20, borderRadius: 10, marginBottom: 15, borderWidth: 1, borderColor: '#dee2e6', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 },
   label: { fontSize: 14, fontWeight: 'bold', color: '#4a5568', marginBottom: 6 },
