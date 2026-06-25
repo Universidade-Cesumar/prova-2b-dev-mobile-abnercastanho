@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Alert, useWindowDimensions } from 'react-native';
 // IMPORTANDO A FUNÇÃO SEPARADA DO ARQUIVO UTILS
 import { validarRetirada } from './utils/validacoes';
 // Garante que o Alert funcione no Navegador Web se não estiver no celular
@@ -15,9 +15,12 @@ export default function App() {
   const [produtos, setProdutos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [idEditando, setIdEditando] = useState(null);
-
-  // SPRINT 3: Estado para o campo de busca
   const [busca, setBusca] = useState('');
+  const [focoNome, setFocoNome] = useState(false);
+  const [focoQtd, setFocoQtd] = useState(false);
+  const [focoBusca, setFocoBusca] = useState(false);
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
 
   const urlAPI = 'https://6a2b36d8b687a7d5cbc4f58b.mockapi.io/materiais';
 
@@ -50,7 +53,7 @@ export default function App() {
       });
 
       if (resposta.ok) {
-        Alert.alert("Sucesso", "Material cadastrado!");
+        Alert.alert("Sucesso", "Material cadastrado com sucesso!");
         setNome('');
         setQuantidade('');
         buscarEstoque();
@@ -76,7 +79,7 @@ export default function App() {
       });
 
       if (resposta.ok) {
-        Alert.alert("Sucesso", "Material updated!");
+        Alert.alert("Sucesso", "Material atualizado!");
         setNome('');
         setQuantidade('');
         setIdEditando(null);
@@ -150,139 +153,169 @@ export default function App() {
     buscarEstoque();
   }, []);
 
-  // SPRINT 3: Filtro em tempo real
   const produtosFiltrados = produtos.filter(produto => 
     produto.name && produto.name.toLowerCase().includes(busca.toLowerCase())
   );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Almoxarifado - Enfermagem</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>🏥 Almoxarifado - Enfermagem</Text>
+      </View>
       
-      {/* Formulário de Cadastro/Edição */}
-      <View style={styles.formContext}>
-        <Text style={styles.label}>Nome do Material:</Text>
-        <TextInput
-          testID="input-nome"
-          style={styles.input}
-          placeholder="Ex: Seringa Descartável"
-          value={nome}
-          onChangeText={setNome}
-        />
-
-        <Text style={styles.label}>Quantidade:</Text>
-        <TextInput
-          testID="input-quantidade"
-          style={styles.input}
-          placeholder="Ex: 50"
-          keyboardType="numeric"
-          value={quantidade}
-          onChangeText={setQuantidade}
-        />
-
-        <TouchableOpacity 
-          testID="btn-cadastrar" 
-          style={idEditando ? styles.buttonEdit : styles.button}
-          onPress={idEditando ? salvarEdicao : cadastrarMaterial}
-        >
-          <Text style={styles.buttonText}>
-            {idEditando ? "💾 Salvar Alterações" : "➕ Cadastrar Insumo"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* SPRINT 3: Campo de Pesquisa e Dashboard */}
-      <View style={styles.searchContext}>
-        <Text style={styles.label}>Pesquisar Material:</Text>
-        <TextInput
-          testID="input-busca"
-          style={styles.input}
-          placeholder="Digite para filtrar..."
-          value={busca}
-          onChangeText={setBusca}
-        />
-        <View style={styles.totalizerBadge}>
-          <Text style={styles.totalizerText}>
-            Itens localizados: <Text testID="total-itens" style={{ fontWeight: 'bold' }}>{produtosFiltrados.length}</Text>
-          </Text>
-        </View>
-      </View>
-
-      <Text style={styles.subtitle}>Estoque Atual</Text>
-
-      {carregando ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#005b96" />
-          <Text style={{ marginTop: 10 }}>Buscando dados no servidor...</Text>
-        </View>
-      ) : (
-        <FlatList
-          testID="lista-materiais"
-          data={produtosFiltrados}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <View 
-              style={[
-                styles.itemRow, 
-                item.quantidade < 10 ? styles.itemCritico : null
-              ]}
-              accessibilityLabel={item.quantidade < 10 ? "estoque-critico" : undefined}
-            >
-              <View style={{ flex: 1, marginRight: 10 }}>
-                <Text style={styles.itemNome}>{item.name}</Text>
-                <View style={styles.badgeQtd}>
-                  <Text style={styles.itemQtdText}>Saldo: {item.quantidade || 0} un</Text>
-                </View>
-              </View>
-              
-              <View style={styles.controlsBlock}>
-                <View style={styles.rowActions}>
-                  <TextInput
-                    testID="input-retirada"
-                    style={styles.inputRetirada}
-                    placeholder="Qtd"
-                    keyboardType="numeric"
-                    value={retiradas[item.id] || ''}
-                    onChangeText={(valor) => handleAlterarRetirada(item.id, valor)}
-                  />
-                  <TouchableOpacity 
-                    testID="btn-baixar" 
-                    style={styles.downloadButton} 
-                    onPress={() => processarBaixaEstoque(item)}
-                  >
-                    <Text style={styles.btnTextWhite}>🔻 Baixar</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.rowActions}>
-                  <TouchableOpacity 
-                    style={styles.editCardButton} 
-                    onPress={() => selecionarParaEdicao(item)}
-                  >
-                    <Text style={styles.actionButtonText}>📝 Editar</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity 
-                    testID="btn-excluir" 
-                    style={styles.deleteButton} 
-                    onPress={() => excluirMaterial(item.id)}
-                  >
-                    <Text style={styles.btnTextWhite}>🗑️ Excluir</Text>
-                  </TouchableOpacity>
-                </View>
+      <View style={styles.contentLayout}>
+        <View style={styles.formContext}>
+          <Text style={styles.sectionHeader}>📋 Gerenciamento de Insumos</Text>
+          
+          <View style={[styles.formGrid, { flexDirection: isMobile ? 'column' : 'row' }]}>
+            <View style={[styles.inputGroup, !isMobile && { marginRight: 15 }]}>
+              <Text style={styles.label}>Nome do Material:</Text>
+              <View style={[styles.inputWrapper, focoNome && styles.inputFocado]}>
+                <Text style={styles.inputIcon}>📦</Text>
+                <TextInput
+                  testID="input-nome"
+                  style={styles.input}
+                  placeholder="Ex: Seringa Descartável"
+                  placeholderTextColor="#94a3b8"
+                  value={nome}
+                  onChangeText={setNome}
+                  onFocus={() => setFocoNome(true)}
+                  onBlur={() => setFocoNome(false)}
+                />
               </View>
             </View>
-          )}
-          style={styles.lista}
-        />
-      )}
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Quantidade:</Text>
+              <View style={[styles.inputWrapper, focoQtd && styles.inputFocado]}>
+                <Text style={styles.inputIcon}>🔢</Text>
+                <TextInput
+                  testID="input-quantidade"
+                  style={styles.input}
+                  placeholder="Ex: 50"
+                  placeholderTextColor="#94a3b8"
+                  keyboardType="numeric"
+                  value={quantidade}
+                  onChangeText={setQuantidade}
+                  onFocus={() => setFocoQtd(true)}
+                  onBlur={() => setFocoQtd(false)}
+                />
+              </View>
+            </View>
+          </View>
+
+          <TouchableOpacity 
+            testID="btn-cadastrar" 
+            style={[idEditando ? styles.buttonEdit : styles.button, styles.btnCentralizado]}
+            onPress={idEditando ? salvarEdicao : cadastrarMaterial}
+          >
+            <Text style={styles.buttonText}>
+              {idEditando ? "💾 Salvar Alterações" : "➕ Cadastrar Insumo"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.searchContext}>
+          <View style={styles.searchHeaderRow}>
+            <Text style={styles.labelBusca}>Filtrar Inventário</Text>
+            <View style={styles.totalizerBadge}>
+              <Text style={styles.totalizerText}>
+                Itens: <Text testID="total-itens" style={{ fontWeight: 'bold' }}>{produtosFiltrados.length}</Text>
+              </Text>
+            </View>
+          </View>
+          <View style={[styles.inputWrapper, focoBusca && styles.inputFocado]}>
+            <Text style={styles.inputIcon}>🔍</Text>
+            <TextInput
+              testID="input-busca"
+              style={styles.input}
+              placeholder="Digite o nome do material para pesquisar..."
+              placeholderTextColor="#94a3b8"
+              value={busca}
+              onChangeText={setBusca}
+              onFocus={() => setFocoBusca(true)}
+              onBlur={() => setFocoBusca(false)}
+            />
+          </View>
+        </View>
+
+        <Text style={styles.subtitle}>Estoque Atual</Text>
+
+        {carregando ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color="#2563eb" />
+            <Text style={{ marginTop: 10 }}>Buscando dados no servidor...</Text>
+          </View>
+        ) : (
+          <FlatList
+            testID="lista-materiais"
+            data={produtosFiltrados}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <View 
+                style={[
+                  styles.itemRow, 
+                  item.quantidade < 10 ? styles.itemCritico : null
+                ]}
+                accessibilityLabel={item.quantidade < 10 ? "estoque-critico" : undefined}
+              >
+                <View style={{ flex: 1, marginRight: 10 }}>
+                  <Text style={styles.itemNome}>{item.name}</Text>
+                  <View style={styles.badgeQtd}>
+                    <Text style={styles.itemQtdText}>Saldo: {item.quantidade || 0} un</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.controlsBlock}>
+                  <View style={styles.rowActions}>
+                    <TextInput
+                      testID="input-retirada"
+                      style={styles.inputRetirada}
+                      placeholder="Qtd"
+                      keyboardType="numeric"
+                      value={retiradas[item.id] || ''}
+                      onChangeText={(valor) => handleAlterarRetirada(item.id, valor)}
+                    />
+                    <TouchableOpacity 
+                      testID="btn-baixar" 
+                      style={styles.downloadButton} 
+                      onPress={() => processarBaixaEstoque(item)}
+                    >
+                      <Text style={styles.btnTextWhite}>🔻 Baixar</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.rowActions}>
+                    <TouchableOpacity 
+                      style={styles.editCardButton} 
+                      onPress={() => selecionarParaEdicao(item)}
+                    >
+                      <Text style={styles.actionButtonText}>📝 Editar</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      testID="btn-excluir" 
+                      style={styles.deleteButton} 
+                      onPress={() => excluirMaterial(item.id)}
+                    >
+                      <Text style={styles.btnTextWhite}>🗑️ Excluir</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            )}
+            style={styles.lista}
+          />
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f0f4f8' }, 
-  contentLayout: { flex: 1, paddingHorizontal: 20, paddingTop: 20 }, 
+  
+  container: { flex: 1, backgroundColor: '#f0f4f8' },
+  contentLayout: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
   header: { 
     backgroundColor: '#1a3a5c', 
     paddingVertical: 18, 
@@ -297,15 +330,68 @@ const styles = StyleSheet.create({
     borderBottomColor: '#2563eb'
   },
   title: { fontSize: 22, fontWeight: '800', color: '#ffffff', textAlign: 'center', letterSpacing: 0.5 },
-  subtitle: { fontSize: 18, fontWeight: 'bold', marginVertical: 15, color: '#333', borderBottomWidth: 2, borderBottomColor: '#005b96', paddingBottom: 5 },
-  formContext: { backgroundColor: '#fff', padding: 20, borderRadius: 10, marginBottom: 15, borderWidth: 1, borderColor: '#dee2e6', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 },
-  label: { fontSize: 14, fontWeight: 'bold', color: '#4a5568', marginBottom: 6 },
-  input: { backgroundColor: '#f8f9fa', borderWidth: 1, borderColor: '#ced4da', borderRadius: 6, padding: 12, marginBottom: 14, fontSize: 15 },
-  button: { backgroundColor: '#005b96', padding: 14, borderRadius: 6, alignItems: 'center', marginTop: 5 },
-  buttonEdit: { backgroundColor: '#28a745', padding: 14, borderRadius: 6, alignItems: 'center', marginTop: 5 },
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  subtitle: { fontSize: 18, fontWeight: '700', marginVertical: 15, color: '#1e293b', borderBottomWidth: 2, borderBottomColor: '#2563eb', paddingBottom: 6 },
+  
+
+  formContext: { 
+    backgroundColor: '#ffffff', 
+    padding: 20, 
+    borderRadius: 12, 
+    marginBottom: 15, 
+    borderWidth: 1, 
+    borderColor: '#e2e8f0', 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.08, 
+    shadowRadius: 8, 
+    elevation: 3 
+  },
+  sectionHeader: { fontSize: 16, fontWeight: '700', color: '#1e293b', marginBottom: 15 },
+  formGrid: { justifyContent: 'space-between' },
+  inputGroup: { flex: 1, marginBottom: 12 },
+  label: { fontSize: 13, fontWeight: '600', color: '#64748b', marginBottom: 6 },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    borderWidth: 1.5,
+    borderColor: '#cbd5e1',
+    borderRadius: 8,
+    paddingHorizontal: 12
+  },
+  inputFocado: {
+    borderColor: '#2563eb',
+    backgroundColor: '#ffffff'
+  },
+  inputIcon: { marginRight: 8, fontSize: 16 },
+  input: { flex: 1, paddingVertical: 10, fontSize: 15, color: '#1e293b', borderWidth: 0, outlineStyle: 'none' },
+  button: { backgroundColor: '#2563eb', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  buttonEdit: { backgroundColor: '#10b981', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  btnCentralizado: { alignSelf: 'center', marginTop: 8, minWidth: 180, shadowColor: '#2563eb', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 },
+  buttonText: { color: '#ffffff', fontWeight: '700', fontSize: 15 },
+  
+
+  searchContext: { 
+    backgroundColor: '#ffffff', 
+    padding: 18, 
+    borderRadius: 12, 
+    marginBottom: 10, 
+    borderWidth: 1, 
+    borderColor: '#e2e8f0',
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.05, 
+    shadowRadius: 6, 
+    elevation: 2 
+  },
+  searchHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  labelBusca: { fontSize: 14, fontWeight: '700', color: '#1e293b' },
+  totalizerBadge: { backgroundColor: '#2563eb', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
+  totalizerText: { fontSize: 12, color: '#ffffff', fontWeight: '500' },
+
+  // Estilos da Lista Herdados (Que serão modificados no Bloco 3)
   lista: { flex: 1 },
-  itemRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 16, backgroundColor: '#fff', borderWidth: 1.5, borderColor: '#ced4da', borderRadius: 8, marginBottom: 12, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+  itemRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 16, backgroundColor: '#fff', borderWidth: 1.5, borderColor: '#ced4da', borderRadius: 8, marginBottom: 12, alignItems: 'center' },
   itemNome: { fontSize: 16, fontWeight: 'bold', color: '#212529' },
   badgeQtd: { backgroundColor: '#e3f2fd', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, marginTop: 6, alignSelf: 'flex-start' },
   itemQtdText: { fontSize: 13, fontWeight: 'bold', color: '#005b96' },
@@ -318,9 +404,5 @@ const styles = StyleSheet.create({
   deleteButton: { flex: 1, backgroundColor: '#dc3545', paddingVertical: 6, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
   btnTextWhite: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
   actionButtonText: { color: '#212529', fontWeight: 'bold', fontSize: 12 },
-  searchContext: { backgroundColor: '#fff', padding: 15, borderRadius: 10, marginBottom: 10, borderWidth: 1, borderColor: '#dee2e6' },
-  totalizerBadge: { backgroundColor: '#e2e8f0', padding: 8, borderRadius: 6, alignItems: 'center', marginTop: 5 },
-  totalizerText: { fontSize: 14, color: '#4a5568' },
-  // Alerta Visual de Estoque Crítico (< 10)
-  itemCritico: { backgroundColor: '#fff5f5', borderColor: '#e53e3e', borderWidth: 2 }
+  itemCritico: { backgroundColor: '#fff5f5', borderColor: '#ef4444' }
 });
